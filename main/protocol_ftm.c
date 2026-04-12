@@ -1,6 +1,7 @@
 #include "protocol_ftm.h"
 #include "routine_micro.h"
 #include "protocol_ble.h"
+#include "globals.h"
 
 #define FTM_SSID       "FTM"
 #define FTM_PASS       "12345678"
@@ -11,13 +12,15 @@
 
 uint8_t s_ap_channel = 0;
 
+volatile bool ftm_running = false;
+volatile bool ble_tx_paused = false;
+
 wifi_ftm_initiator_cfg_t ftmi_cfg = {
     .frm_count = 16,
     .burst_period = 2,
     .use_get_report_api = false,
 };
 
-volatile bool ftm_running = false;
 
 extern EventGroupHandle_t system_events;
 
@@ -179,6 +182,8 @@ bool ftm_try_once(void)
 bool ftm_perform(void)
 {
     ftm_running = true;
+    ble_tx_paused = true;
+
     vTaskDelay(pdMS_TO_TICKS(100));
 
     for (int i = 0; i < FTM_MAX_RETRY; i++) {
@@ -189,6 +194,7 @@ bool ftm_perform(void)
                      s_dist_est / 100.0, s_rtt_est);
 
             ftm_running = false;
+            ble_tx_paused = false;
             return true;
         }
 
@@ -196,9 +202,9 @@ bool ftm_perform(void)
         vTaskDelay(pdMS_TO_TICKS(200));
     }
 
-    ESP_LOGW(TAG_STA, "FTM timeout/fail");
-
     ftm_running = false;
+    ble_tx_paused = false;
+
     return false;
 }
 

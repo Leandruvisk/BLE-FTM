@@ -42,6 +42,8 @@ void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *par
 void ble_init();
 void ble_send_data(uint8_t *data, uint16_t len);
 void spp_heartbeat_task(void * arg);
+static inline bool ble_can_send(void);
+
 
 
 

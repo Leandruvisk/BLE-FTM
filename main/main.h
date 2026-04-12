@@ -50,6 +50,7 @@ static const uint16_t spp_service_uuid = 0xABF0;
 #endif
 
 
+
 enum{
     SPP_IDX_SVC,
 

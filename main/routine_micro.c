@@ -8,7 +8,6 @@
 static const char *TAG = "ROUTINE";
 
 EventGroupHandle_t system_events;
-
 static void routine_task(void *pvParameters)
 {
     while (1) {

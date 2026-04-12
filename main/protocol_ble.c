@@ -2,6 +2,7 @@
 #include "nvs_particions.h"
 #include "routine_micro.h"
 #include "protocol_ftm.h"
+#include "globals.h"
 
 QueueHandle_t spp_uart_queue = NULL;
 extern EventGroupHandle_t system_events;
@@ -656,7 +657,12 @@ void ble_init(){
 
 void ble_send_data(uint8_t *data, uint16_t len)
 {
-    //if (ftm_running) return; 
+    if (!is_connected) return;
+
+    // 🔥 BLOQUEIO CENTRAL
+    if (ftm_running || ble_tx_paused) {
+        return;
+    }
 
     esp_ble_gatts_send_indicate(
         spp_gatts_if,
@@ -687,3 +693,9 @@ void spp_heartbeat_task(void * arg)
     }
 }
 #endif
+
+
+static inline bool ble_can_send(void)
+{
+    return is_connected && !ftm_running && !ble_tx_paused;
+}

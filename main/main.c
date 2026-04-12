@@ -6,7 +6,6 @@
 #include "routine_micro.h"
 
 
-
 void app_main(void)
 {
     init_nvs();
