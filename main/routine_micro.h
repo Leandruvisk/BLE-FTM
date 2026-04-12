@@ -10,6 +10,6 @@
 
 extern EventGroupHandle_t system_events;
 
+static void routine_task(void *pvParameters);
 void routine_micro_start(void);
-void build_payload(uint8_t *buffer);
 #endif // ROUTINE_MICRO_H
