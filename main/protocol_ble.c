@@ -1,6 +1,7 @@
 #include "protocol_ble.h"
 #include "nvs_particions.h"
 #include "routine_micro.h"
+#include "protocol_ftm.h"
 
 QueueHandle_t spp_uart_queue = NULL;
 extern EventGroupHandle_t system_events;
@@ -525,6 +526,14 @@ void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts
     	case ESP_GATTS_STOP_EVT:
         	break;
     	case ESP_GATTS_CONNECT_EVT:
+            esp_ble_conn_update_params_t params = {
+                .min_int = 0x50,
+                .max_int = 0x80,
+                .latency = 4,
+                .timeout = 400
+            };
+
+            esp_ble_gap_update_conn_params(&params);
     	    spp_conn_id = p_data->connect.conn_id;
     	    spp_gatts_if = gatts_if;
     	    is_connected = true;
@@ -645,7 +654,7 @@ void ble_init(){
 
 void ble_send_data(uint8_t *data, uint16_t len)
 {
-    if (!is_connected || !enable_data_ntf) return;
+    if (ftm_running) return; 
 
     esp_ble_gatts_send_indicate(
         spp_gatts_if,
@@ -657,27 +666,3 @@ void ble_send_data(uint8_t *data, uint16_t len)
     );
 }
 
-
-void ble_stop(void)
-{
-    if (!ble_active) return;
-
-    ESP_LOGI("BLE_CTRL", "Stopping BLE...");
-
-    esp_bluedroid_disable();
-    esp_bt_controller_disable();
-
-    ble_active = false;
-}
-
-void ble_start_safe(void)
-{
-    if (ble_active) return;
-
-    ESP_LOGI("BLE_CTRL", "Starting BLE...");
-
-    esp_bt_controller_enable(ESP_BT_MODE_BLE);
-    esp_bluedroid_enable();
-
-    ble_active = true;
-}

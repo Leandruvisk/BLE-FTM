@@ -4,18 +4,20 @@
 
 #define FTM_SSID       "FTM"
 #define FTM_PASS       "12345678"
-#define FTM_DELAY_MS   1000     // 🔥 mais seguro
+#define FTM_DELAY_MS   1000
 #define WIFI_STABLE_MS 2000
 #define FTM_TIMEOUT_MS 5000
-#define FTM_RETRY      3
+#define FTM_MAX_RETRY 3
 
 uint8_t s_ap_channel = 0;
 
 wifi_ftm_initiator_cfg_t ftmi_cfg = {
     .frm_count = 16,
-    .burst_period = 2,              // 🔥 CORRIGIDO
-    .use_get_report_api = true,     // 🔥 IMPORTANTE
+    .burst_period = 2,
+    .use_get_report_api = true,
 };
+
+volatile bool ftm_running = false;
 
 extern EventGroupHandle_t system_events;
 
@@ -147,33 +149,64 @@ static bool ftm_once(void)
     return false;
 }
 
-/* ========================= FTM COM RETRY ========================= */
+bool ftm_try_once(void)
+{
+    EventBits_t bits;
+
+    xEventGroupClearBits(s_ftm_event_group,
+                         FTM_REPORT_BIT | FTM_FAILURE_BIT);
+
+    memcpy(ftmi_cfg.resp_mac, s_ap_bssid, ETH_ALEN);
+    ftmi_cfg.channel = s_ap_channel;
+
+    ESP_LOGI(TAG_STA, "FTM start (ch=%d)", ftmi_cfg.channel);
+
+    if (esp_wifi_ftm_initiate_session(&ftmi_cfg) != ESP_OK) {
+        return false;
+    }
+
+    bits = xEventGroupWaitBits(
+        s_ftm_event_group,
+        FTM_REPORT_BIT | FTM_FAILURE_BIT,
+        pdTRUE,
+        pdFALSE,
+        pdMS_TO_TICKS(4000) // 🔥 maior tolerância
+    );
+
+    return (bits & FTM_REPORT_BIT);
+}
 
 bool ftm_perform(void)
 {
-    for (int i = 0; i < FTM_RETRY; i++) {
+    ftm_running = true;
+    vTaskDelay(pdMS_TO_TICKS(100));
 
-        if (ftm_once()) {
+    for (int i = 0; i < FTM_MAX_RETRY; i++) {
+
+        if (ftm_try_once()) {
+
             ESP_LOGI(TAG_STA, "Distance: %.2f m | RTT: %d ns",
                      s_dist_est / 100.0, s_rtt_est);
+
+            ftm_running = false;
             return true;
         }
 
-        ESP_LOGW(TAG_STA, "Retry %d/%d", i + 1, FTM_RETRY);
+        ESP_LOGW(TAG_STA, "Retry %d/%d", i+1, FTM_MAX_RETRY);
         vTaskDelay(pdMS_TO_TICKS(200));
     }
 
+    ESP_LOGW(TAG_STA, "FTM timeout/fail");
+
+    ftm_running = false;
     return false;
 }
-
-/* ========================= MEASURE ========================= */
 
 void ftm_measure(void)
 {
     wifi_init_sta();
     wifi_connect();
 
-    ble_stop();
     vTaskDelay(pdMS_TO_TICKS(200));
 
     for (int i = 0; i < BUFFER_SIZE; i++) {
@@ -194,12 +227,8 @@ void ftm_measure(void)
         vTaskDelay(pdMS_TO_TICKS(FTM_DELAY_MS));
     }
 
-    ble_start_safe();
-
     xEventGroupSetBits(system_events, EVT_FTM_READY);
 }
-
-/* ========================= TASK ========================= */
 
 void ftm_task(void *pvParameters)
 {

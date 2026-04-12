@@ -63,8 +63,8 @@ static uint8_t s_ap_bssid[ETH_ALEN];
 extern uint16_t g_scan_ap_num;
 extern wifi_ap_record_t *g_ap_list_buffer;
 extern char SSID[32];
- extern const int g_report_lvl;
-
+extern const int g_report_lvl;
+extern volatile bool ftm_running;
 
 
 

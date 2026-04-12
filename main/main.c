@@ -22,11 +22,8 @@ void console_init(void)
 void app_main(void)
 {
     init_nvs();
-    // console_init();
 
     routine_micro_start();
-
-    // ble_init();
 
     xTaskCreate(max30102_task, "max30102", 4096, NULL, 5, NULL);
     xTaskCreate(ftm_task, "ftm", 4096, NULL, 5, NULL);
