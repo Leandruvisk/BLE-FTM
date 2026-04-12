@@ -1,6 +1,33 @@
 #include "protocol_ftm.h"
+#include "routine_micro.h"
 
 uint8_t s_ap_channel = 0;
+uint16_t g_scan_ap_num = 0;
+wifi_ap_record_t *g_ap_list_buffer = NULL;
+char SSID[32] = "FTM_AP";
+
+
+wifi_ftm_initiator_cfg_t ftmi_cfg = {
+    .frm_count = 32,
+    .burst_period = 100,
+};
+
+const int g_report_lvl =
+#ifdef CONFIG_ESP_FTM_REPORT_SHOW_DIAG
+    BIT0 |
+#endif
+#ifdef CONFIG_ESP_FTM_REPORT_SHOW_RTT
+    BIT1 |
+#endif
+#ifdef CONFIG_ESP_FTM_REPORT_SHOW_T1T2T3T4
+    BIT2 |
+#endif
+#ifdef CONFIG_ESP_FTM_REPORT_SHOW_RSSI
+    BIT3 |
+#endif
+0;
+
+extern EventGroupHandle_t system_events;
 
 void event_handler(void *arg, esp_event_base_t event_base,
                           int32_t event_id, void *event_data)
@@ -275,15 +302,8 @@ void register_wifi(void)
 
 }
 
-void ftm_routine(void)
+void ftm_measure(void)
 {
-    // esp_err_t ret = nvs_flash_init();
-    // if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-    //     ESP_ERROR_CHECK(nvs_flash_erase());
-    //     ret = nvs_flash_init();
-    // }
-    // ESP_ERROR_CHECK( ret );
-
     initialise_wifi();
 
     esp_console_repl_t *repl = NULL;
@@ -336,4 +356,13 @@ void ftm_routine(void)
     gpio_set_level(GPIO_NUM_8, 1);
 
 
+}
+
+void ftm_task(void *pvParameters)
+{
+    while (1) {
+
+        ftm_measure();
+        xEventGroupSetBits(system_events, EVT_FTM_READY);
+    }
 }

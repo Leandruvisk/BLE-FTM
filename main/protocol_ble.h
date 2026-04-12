@@ -39,7 +39,8 @@ void spp_task_init(void);
 void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp_ble_gatts_cb_param_t *param);
 void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
-
+void ble_start();
+void ble_send_data(uint8_t *data, uint16_t len);
 
 
 #endif // BLE_SPP_SERVER_DEMO_H

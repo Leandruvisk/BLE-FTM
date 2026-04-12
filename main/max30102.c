@@ -2,10 +2,12 @@
 #include "max30102.h"
 #include "i2c-driver.h"
 #include "esp_log.h"
+#include "routine_micro.h"
 
 // Put the max30102_init and max30102_task functions here from your initial code
 
 #define I2C_ADDR_MAX30102 0x57
+extern EventGroupHandle_t system_events;
 
 float heartrate=99.2, pctspo2=99.2;   
 int irpower = 0, rpower = 0, lirpower = 0, lrpower = 0;
@@ -28,7 +30,8 @@ void max30102_init() {
     i2c_write(I2C_ADDR_MAX30102, 0x0d, data);
 }
 
-void max30102_task (void *pvParameters) {
+void read_max30102 () 
+{
     int cnt, samp, tcnt = 0;
     uint8_t rptr, wptr;
     uint8_t data;
@@ -116,5 +119,24 @@ void max30102_task (void *pvParameters) {
                     strcat (outStr, tmp);  
                 }
         }
+    }
+}
+
+void max30102_start()
+{
+    i2c_init();
+    max30102_init();
+}
+
+
+void max30102_task(void *pvParameters)
+{
+    max30102_start();
+    
+    while (1) {
+
+        read_max30102();
+        xEventGroupSetBits(system_events, EVT_SENSOR_READY);
+        vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }

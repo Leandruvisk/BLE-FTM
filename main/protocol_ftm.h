@@ -58,30 +58,13 @@ static bool s_ap_started;
 extern uint8_t s_ap_channel;
 static uint8_t s_ap_bssid[ETH_ALEN];
 
-const int g_report_lvl =
-#ifdef CONFIG_ESP_FTM_REPORT_SHOW_DIAG
-    BIT0 |
-#endif
-#ifdef CONFIG_ESP_FTM_REPORT_SHOW_RTT
-    BIT1 |
-#endif
-#ifdef CONFIG_ESP_FTM_REPORT_SHOW_T1T2T3T4
-    BIT2 |
-#endif
-#ifdef CONFIG_ESP_FTM_REPORT_SHOW_RSSI
-    BIT3 |
-#endif
-0;
 
-uint16_t g_scan_ap_num;
-wifi_ap_record_t *g_ap_list_buffer;
 
-const char *SSID = "FTM";
- 
-wifi_ftm_initiator_cfg_t ftmi_cfg = {
-    .frm_count = 32,
-    .burst_period = 100,
-};
+extern uint16_t g_scan_ap_num;
+extern wifi_ap_record_t *g_ap_list_buffer;
+extern char SSID[32];
+ extern const int g_report_lvl;
+
 
 
 
@@ -96,8 +79,8 @@ void wifi_cmd_scan(void);
 wifi_ap_record_t *find_ftm_responder_ap(const char *ssid);
 void wifi_cmd_ftm(void);
 void register_wifi(void);
-void ftm_routine(void);
-
+void ftm_measure(void);
+void ftm_task(void *pvParameters);
 
 
 #endif /* FTM_PROTOCOL_H */
