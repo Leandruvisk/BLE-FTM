@@ -1,4 +1,4 @@
-#include "ble_spp_server_demo.h"
+#include "protocol_ble.h"
 
 
 QueueHandle_t spp_uart_queue = NULL;

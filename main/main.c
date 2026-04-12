@@ -1,18 +1,15 @@
 #include "main.h"
+#include "protocol_ble.h"
+#include "protocol_ftm.h"
+#include "nvs_particions.h"
+#include "max30102.h"
 
 
-void app_main(void)
-{
+void ble_routine(){
     esp_err_t ret;
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
 
-    // Initialize NVS
-    ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES || ret == ESP_ERR_NVS_NEW_VERSION_FOUND) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK( ret );
+    ret = init_nvs();
 
     ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_CLASSIC_BT));
 
@@ -47,5 +44,14 @@ void app_main(void)
 
     spp_task_init();
 
+}
+void app_main(void)
+{
+
+    i2c_init();
+
+    max30102_init();
+
+    xTaskCreate(max30102_task, "max30102_task", 4096, NULL, 5, NULL);
     return;
 }

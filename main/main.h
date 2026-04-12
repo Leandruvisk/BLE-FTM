@@ -2,11 +2,31 @@
 #define MAIN_H
 
 #include <stdint.h>
-#include "ble_spp_server_demo.h"
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
+#include <inttypes.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/event_groups.h"
+#include "esp_system.h"
+#include "esp_log.h"
+#include "esp_event.h"
+#include "esp_err.h"
+#include "esp_console.h"
+#include "cmd_system.h"
 
+
+#include "esp_bt.h"
+#include "esp_bt_main.h"
+#include "esp_gap_ble_api.h"
+#include "esp_gatts_api.h"
+#include "esp_bt_defs.h"
+
+#include "i2c-driver.h"
 
 #define GATTS_TABLE_TAG  "GATTS_SPP_DEMO"
 
