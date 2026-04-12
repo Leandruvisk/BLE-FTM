@@ -681,8 +681,8 @@ void spp_heartbeat_task(void * arg)
                 heartbeat_s,
                 false
             );
+            ESP_LOGI("HB", "send result=%s", esp_err_to_name(err));
         }
-        ESP_LOGI("HB", "send result=%s", esp_err_to_name(err));
         vTaskDelay(2000 / portTICK_PERIOD_MS);
     }
 }
