@@ -8,6 +8,8 @@ extern EventGroupHandle_t system_events;
 static bool uart_initialized = false;
 static bool ble_active = false;
 
+
+
 esp_ble_adv_params_t spp_adv_params = {
     .adv_int_min        = 0x20,
     .adv_int_max        = 0x40,
@@ -359,31 +361,31 @@ void spp_uart_init(void)
     uart_initialized = true;
 }
 
-#ifdef SUPPORT_HEARTBEAT
-void spp_heartbeat_task(void * arg)
-{
-    uint16_t cmd_id;
+// #ifdef SUPPORT_HEARTBEAT
+// void spp_heartbeat_task(void * arg)
+// {
+//     uint16_t cmd_id;
 
-    for(;;) {
-        vTaskDelay(50 / portTICK_PERIOD_MS);
-        if(xQueueReceive(cmd_heartbeat_queue, &cmd_id, portMAX_DELAY)) {
-            while(1){
-                heartbeat_count_num++;
-                vTaskDelay(5000/ portTICK_PERIOD_MS);
-                if((heartbeat_count_num >3)&&(is_connected)){
-                    esp_ble_gap_disconnect(spp_remote_bda);
-                }
-                if(is_connected && enable_heart_ntf){
-                    esp_ble_gatts_send_indicate(spp_gatts_if, spp_conn_id, spp_handle_table[SPP_IDX_SPP_HEARTBEAT_VAL],sizeof(heartbeat_s), heartbeat_s, false);
-                }else if(!is_connected){
-                    break;
-                }
-            }
-        }
-    }
-    vTaskDelete(NULL);
-}
-#endif
+//     for(;;) {
+//         vTaskDelay(50 / portTICK_PERIOD_MS);
+//         if(xQueueReceive(cmd_heartbeat_queue, &cmd_id, portMAX_DELAY)) {
+//             while(1){
+//                 heartbeat_count_num++;
+//                 vTaskDelay(5000/ portTICK_PERIOD_MS);
+//                 if((heartbeat_count_num >3)&&(is_connected)){
+//                     esp_ble_gap_disconnect(spp_remote_bda);
+//                 }
+//                 if(is_connected && enable_heart_ntf){
+//                     esp_ble_gatts_send_indicate(spp_gatts_if, spp_conn_id, spp_handle_table[SPP_IDX_SPP_HEARTBEAT_VAL],sizeof(heartbeat_s), heartbeat_s, false);
+//                 }else if(!is_connected){
+//                     break;
+//                 }
+//             }
+//         }
+//     }
+//     vTaskDelete(NULL);
+// }
+// #endif
 
 void spp_cmd_task(void * arg)
 {
@@ -526,14 +528,14 @@ void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts
     	case ESP_GATTS_STOP_EVT:
         	break;
     	case ESP_GATTS_CONNECT_EVT:
-            esp_ble_conn_update_params_t params = {
-                .min_int = 0x50,
-                .max_int = 0x80,
-                .latency = 4,
-                .timeout = 400
-            };
+            // esp_ble_conn_update_params_t params = {
+            //     .min_int = 0x50,
+            //     .max_int = 0x80,
+            //     .latency = 4,
+            //     .timeout = 400
+            // };
 
-            esp_ble_gap_update_conn_params(&params);
+            // esp_ble_gap_update_conn_params(&params);
     	    spp_conn_id = p_data->connect.conn_id;
     	    spp_gatts_if = gatts_if;
     	    is_connected = true;
@@ -654,7 +656,7 @@ void ble_init(){
 
 void ble_send_data(uint8_t *data, uint16_t len)
 {
-    if (ftm_running) return; 
+    //if (ftm_running) return; 
 
     esp_ble_gatts_send_indicate(
         spp_gatts_if,
@@ -666,3 +668,22 @@ void ble_send_data(uint8_t *data, uint16_t len)
     );
 }
 
+#ifdef SUPPORT_HEARTBEAT
+void spp_heartbeat_task(void * arg)
+{
+    while(1){
+        if(is_connected && enable_heart_ntf){
+            esp_err_t err = esp_ble_gatts_send_indicate(
+                spp_gatts_if,
+                spp_conn_id,
+                spp_handle_table[SPP_IDX_SPP_HEARTBEAT_VAL],
+                sizeof(heartbeat_s),
+                heartbeat_s,
+                false
+            );
+        }
+        ESP_LOGI("HB", "send result=%s", esp_err_to_name(err));
+        vTaskDelay(2000 / portTICK_PERIOD_MS);
+    }
+}
+#endif

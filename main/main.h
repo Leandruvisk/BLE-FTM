@@ -29,6 +29,7 @@
 #include "i2c-driver.h"
 
 #define GATTS_TABLE_TAG  "GATTS_SPP_DEMO"
+#define SUPPORT_HEARTBEAT
 
 #define SPP_PROFILE_NUM             1
 #define SPP_PROFILE_APP_IDX         0
@@ -93,11 +94,11 @@ static QueueHandle_t cmd_cmd_queue = NULL;
 #ifdef SUPPORT_HEARTBEAT
 static QueueHandle_t cmd_heartbeat_queue = NULL;
 static uint8_t  heartbeat_s[9] = {'E','s','p','r','e','s','s','i','f'};
-static bool enable_heart_ntf = false;
+static bool enable_heart_ntf = true;
 static uint8_t heartbeat_count_num = 0;
 #endif
 
-static bool enable_data_ntf = false;
+static bool enable_data_ntf = true;
 static bool is_connected = false;
 static esp_bd_addr_t spp_remote_bda = {0x0,};
 

@@ -41,6 +41,8 @@ void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts
 void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param);
 void ble_init();
 void ble_send_data(uint8_t *data, uint16_t len);
+void spp_heartbeat_task(void * arg);
+
 
 
 #endif // BLE_SPP_SERVER_DEMO_H

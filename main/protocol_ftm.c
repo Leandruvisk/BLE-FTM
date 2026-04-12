@@ -14,7 +14,7 @@ uint8_t s_ap_channel = 0;
 wifi_ftm_initiator_cfg_t ftmi_cfg = {
     .frm_count = 16,
     .burst_period = 2,
-    .use_get_report_api = true,
+    .use_get_report_api = false,
 };
 
 volatile bool ftm_running = false;
