@@ -4,6 +4,8 @@
 
 QueueHandle_t spp_uart_queue = NULL;
 extern EventGroupHandle_t system_events;
+static bool uart_initialized = false;
+static bool ble_active = false;
 
 esp_ble_adv_params_t spp_adv_params = {
     .adv_int_min        = 0x20,
@@ -343,13 +345,17 @@ void spp_uart_init(void)
         .source_clk = UART_SCLK_DEFAULT,
     };
 
+    if (uart_initialized) return;
+
     //Install UART driver, and get the queue.
-    uart_driver_install(UART_NUM_0, 4096, 8192, 10,&spp_uart_queue,0);
+    uart_driver_install(UART_NUM_0, 2048, 2048, 10, &spp_uart_queue,0);
     //Set UART parameters
     uart_param_config(UART_NUM_0, &uart_config);
     //Set UART pins
     uart_set_pin(UART_NUM_0, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     xTaskCreate(uart_task, "uTask", 2048, (void*)UART_NUM_0, 8, NULL);
+
+    uart_initialized = true;
 }
 
 #ifdef SUPPORT_HEARTBEAT
@@ -596,7 +602,7 @@ void gatts_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts_if, esp
 
 
 
-void ble_start(){
+void ble_init(){
     esp_err_t ret;
     esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
 
@@ -649,4 +655,29 @@ void ble_send_data(uint8_t *data, uint16_t len)
         data,
         false
     );
+}
+
+
+void ble_stop(void)
+{
+    if (!ble_active) return;
+
+    ESP_LOGI("BLE_CTRL", "Stopping BLE...");
+
+    esp_bluedroid_disable();
+    esp_bt_controller_disable();
+
+    ble_active = false;
+}
+
+void ble_start_safe(void)
+{
+    if (ble_active) return;
+
+    ESP_LOGI("BLE_CTRL", "Starting BLE...");
+
+    esp_bt_controller_enable(ESP_BT_MODE_BLE);
+    esp_bluedroid_enable();
+
+    ble_active = true;
 }
