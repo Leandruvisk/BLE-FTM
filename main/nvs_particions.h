@@ -9,7 +9,6 @@
 #include "esp_log.h"
 
 esp_err_t init_nvs(void);
-void realizar_calibracao(const char* nvs_key);
 
 typedef struct {
     int hr_max;

@@ -542,14 +542,6 @@ void gatts_profile_event_handler(esp_gatts_cb_event_t event, esp_gatt_if_t gatts
     	case ESP_GATTS_STOP_EVT:
         	break;
     	case ESP_GATTS_CONNECT_EVT:
-            // esp_ble_conn_update_params_t params = {
-            //     .min_int = 0x50,
-            //     .max_int = 0x80,
-            //     .latency = 4,
-            //     .timeout = 400
-            // };
-
-            // esp_ble_gap_update_conn_params(&params);
     	    spp_conn_id = p_data->connect.conn_id;
     	    spp_gatts_if = gatts_if;
     	    is_connected = true;

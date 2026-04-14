@@ -5,7 +5,7 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 
-extern int heartrate; 
+extern float temp_heartrate; 
 static const char *TAG = "CALIB_MAX";
 
 /**
@@ -46,7 +46,8 @@ void start_calibration_process(calib_state_t state) {
     int64_t start_time = esp_timer_get_time();
     
     while ((esp_timer_get_time() - start_time) < 5000000) {
-        int hr_sample = heartrate; 
+        int hr_sample = temp_heartrate;
+        printf("valor temp_heartrate: %f\n", temp_heartrate); 
         
         if (hr_sample > 40 && hr_sample < 220) {
             if (hr_sample > hr_max) hr_max = hr_sample;

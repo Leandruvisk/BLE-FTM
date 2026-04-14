@@ -13,9 +13,8 @@ EventGroupHandle_t system_events;
 extern float g_last_ftm_distance;
 extern int g_last_ftm_rtt;
 extern int g_last_ftm_rssi;
-extern uint8_t global_bpm;
-
-uint8_t global_bpm = 0;
+extern float temp_heartrate;
+float heartrate_now = 0; 
 
 static void routine_task(void *pvParameters)
 {
@@ -28,22 +27,25 @@ static void routine_task(void *pvParameters)
             portMAX_DELAY
         );
 
-        uint8_t payload[64];
+        uint8_t payload[32]; // Reduzido, pois a string será bem curta
         memset(payload, 0, sizeof(payload));
 
-        // Pega no valor diretamente como inteiro (assumindo que já está em CM)
         int dist_cm = (int)g_last_ftm_distance; 
+        heartrate_now = temp_heartrate;
 
-        // FORMATAÇÃO CURTA (Para caber nos 20 bytes de MTU do BLE)
-        // R = RTT, S = RSSI, D = Dist, B = BPM
+        // Enviando apenas os valores: RTT, RSSI, DIST, BPM
+        // Exemplo de saída: "14,-30,210,88"
         int len = snprintf((char *)payload, sizeof(payload), 
-                           "R:%d,S:%d,D:%d,B:%u", 
-                           g_last_ftm_rtt, 
-                           g_last_ftm_rssi, 
+                           "%d,%d,%d,%d", 
+                           (int)g_last_ftm_rtt, 
+                           (int)g_last_ftm_rssi, 
                            dist_cm,
-                           global_bpm);
+                           (int)temp_heartrate);
 
         ESP_LOGI("PAYLOAD_DEBUG", "String gerada: %s", (char *)payload);
+
+        // Importante: Não zere a temp_heartrate aqui se for usar na calibração!
+        heartrate_now = 0; 
 
         if (len > 0) {
             ble_send_data(payload, len);
