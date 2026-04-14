@@ -37,22 +37,13 @@ void read_max30102 ()
     uint8_t data;
     uint8_t regdata[256];
     //int irmeas, redmeas;
-    float firxv[5], firyv[5], fredxv[5], fredyv[5];
-    float lastmeastime = 0;
-    float hrarray[5],spo2array[5];
-    int hrarraycnt = 0;
-    while(1){
+    static float firxv[5], firyv[5], fredxv[5], fredyv[5];
+    static float lastmeastime = 0;
+    static float hrarray[5],spo2array[5];
+    static int hrarraycnt = 0;
+    // while(1){
         // Update LED pulse amplitude if needed
-        if(lirpower!=irpower){
-            data = (uint8_t) irpower;
-            i2c_write(I2C_ADDR_MAX30102, 0x0d,  data); 
-            lirpower=irpower;
-        }
-        if(lrpower!=rpower){
-            data = (uint8_t) rpower;
-            i2c_write(I2C_ADDR_MAX30102, 0x0c,  data); 
-            lrpower=rpower;
-        }
+
 
         // Reading FIFO data pointers
         i2c_read(I2C_ADDR_MAX30102, 0x04, &wptr, 1);
@@ -119,7 +110,7 @@ void read_max30102 ()
                     strcat (outStr, tmp);  
                 }
         }
-    }
+    // }
 }
 
 void max30102_start()
@@ -132,8 +123,19 @@ void max30102_start()
 void max30102_task(void *pvParameters)
 {
     max30102_start();
-    
+    uint8_t data;
     while (1) {
+        
+        if(lirpower!=irpower){
+            data = (uint8_t) irpower;
+            i2c_write(I2C_ADDR_MAX30102, 0x0d,  data); 
+            lirpower=irpower;
+        }
+        if(lrpower!=rpower){
+            data = (uint8_t) rpower;
+            i2c_write(I2C_ADDR_MAX30102, 0x0c,  data); 
+            lrpower=rpower;
+        }
 
         read_max30102();
         xEventGroupSetBits(system_events, EVT_SENSOR_READY);

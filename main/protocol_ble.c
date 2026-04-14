@@ -3,6 +3,7 @@
 #include "routine_micro.h"
 #include "protocol_ftm.h"
 #include "globals.h"
+#include "calibration_max30102.h"
 
 QueueHandle_t spp_uart_queue = NULL;
 extern EventGroupHandle_t system_events;
@@ -391,11 +392,23 @@ void spp_uart_init(void)
 void spp_cmd_task(void * arg)
 {
     uint8_t * cmd_id;
-
     for(;;){
-        vTaskDelay(50 / portTICK_PERIOD_MS);
         if(xQueueReceive(cmd_cmd_queue, &cmd_id, portMAX_DELAY)) {
-            esp_log_buffer_char(GATTS_TABLE_TAG,(char *)(cmd_id),strlen((char *)cmd_id));
+            
+            // 1. Executa a calibração de 5s (bloqueia esta task, mas não o BLE)
+            start_calibration_process((calib_state_t)cmd_id[0]);
+
+            // 2. Após salvar, vamos "ler" para enviar de volta via BLE como confirmação
+            int32_t v_max = 0, v_min = 0;
+            // Aqui chamamos uma função de GET que você criou no calibration_max30102.c
+            if (get_last_calibration_results((calib_state_t)cmd_id[0], &v_max, &v_min)) {
+                char feedback[60];
+                snprintf(feedback, sizeof(feedback), "Calib OK! Max:%ld Min:%ld", v_max, v_min);
+                
+                // Envia para o celular via a característica de Notify que você já tem
+                ble_send_data((uint8_t*)feedback, strlen(feedback));
+            }
+
             free(cmd_id);
         }
     }
@@ -408,11 +421,11 @@ void spp_task_init(void)
 
 #ifdef SUPPORT_HEARTBEAT
     cmd_heartbeat_queue = xQueueCreate(10, sizeof(uint32_t));
-    xTaskCreate(spp_heartbeat_task, "spp_heartbeat_task", 2048, NULL, 10, NULL);
+    xTaskCreate(spp_heartbeat_task, "spp_heartbeat_task", 1024*6, NULL, 10, NULL);
 #endif
 
     cmd_cmd_queue = xQueueCreate(10, sizeof(uint32_t));
-    xTaskCreate(spp_cmd_task, "spp_cmd_task", 2048, NULL, 10, NULL);
+    xTaskCreate(spp_cmd_task, "spp_cmd_task", 1024*6, NULL, 10, NULL);
 }
 
 void gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_param_t *param)
